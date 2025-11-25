@@ -15,7 +15,7 @@ def download_or_load(ticker, start, end):
     # If CSV already exists it will not be downloaded again
     if os.path.exists(file_path):
         print(f"[LOAD DATA] {ticker} already saved. Loading from CSV...")
-        return pd.read_csv(file_path, parse_dates=["Date"], index_col="Date")
+        return pd.read_csv(file_path, skiprows=2, parse_dates=["Date"], index_col="Date")
 
     # Otherwise we download and save the CSV
     print(f"[DOWNLOAD DATA] Getting data for {ticker}...")
