@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import numpy as np
+import statsmodels.api as sm
 import yfinance as yf
 
 DATA_FOLDER = "../data"
@@ -46,4 +48,40 @@ def clear_all_csv():
         if file.endswith(".csv"):
             os.remove(os.path.join(DATA_FOLDER, file))
             print(f"[DELETED DATA] {file}")
+    print("[DATA CLEARED] All CSV files deleted.")
 
+def max_drawdown(return_series):
+    """
+    Compute max drawdown from cumulative returns.
+    """
+    cum_returns = (1 + return_series).cumprod()
+    peak = cum_returns.cummax()
+    drawdown = (cum_returns - peak) / peak
+    return drawdown.min()
+
+def performance_metrics(return_series):
+    """
+    Compute metrics for one return series.
+    We use the folowing metrics to evaluate performance:
+    - Sharpe Ratio
+    - Max Drawdown
+    - Kurtosis
+    - Skewness
+    - Annualized Volatility
+    """
+    # Annualization factor (daily data)
+    ann_factor = np.sqrt(252)
+
+    sharpe = (return_series.mean() / return_series.std()) * ann_factor
+    vol = return_series.std() * np.sqrt(252)
+    mdd = max_drawdown(return_series)
+    kurt = return_series.kurtosis()
+    skew = return_series.skew()
+
+    return pd.Series({
+        "Sharpe Ratio": sharpe,
+        "Max Drawdown": mdd,
+        "Kurtosis": kurt,
+        "Skewness": skew,
+        "Annualized Volatility": vol
+    })
