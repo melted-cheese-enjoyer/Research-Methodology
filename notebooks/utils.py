@@ -50,16 +50,15 @@ def clear_all_csv():
             print(f"[DELETED DATA] {file}")
     print("[DATA CLEARED] All CSV files deleted.")
 
-def max_drawdown(return_series):
+def max_drawdown(cum_return_series):
     """
     Compute max drawdown from cumulative returns.
     """
-    cum_returns = (1 + return_series).cumprod()
-    peak = cum_returns.cummax()
-    drawdown = (cum_returns - peak) / peak
+    peak = cum_return_series.cummax()
+    drawdown = (cum_return_series - peak) / peak
     return drawdown.min()
 
-def performance_metrics(return_series):
+def performance_metrics(cumreturn_series, var_conf=0.95):
     """
     Compute metrics for one return series.
     We use the folowing metrics to evaluate performance:
@@ -69,19 +68,29 @@ def performance_metrics(return_series):
     - Skewness
     - Annualized Volatility
     """
-    # Annualization factor (daily data)
+    # Daily returns from cumulative return series
+    daily_returns = cumreturn_series.pct_change().dropna()
     ann_factor = np.sqrt(252)
 
-    sharpe = (return_series.mean() / return_series.std()) * ann_factor
-    vol = return_series.std() * np.sqrt(252)
-    mdd = max_drawdown(return_series)
-    kurt = return_series.kurtosis()
-    skew = return_series.skew()
+    sharpe = (daily_returns.mean() / daily_returns.std()) * ann_factor
+    vol = daily_returns.std() * np.sqrt(252)
+    mdd = max_drawdown(cumreturn_series)
+    kurt = daily_returns.kurtosis()
+    skew = daily_returns.skew()
+
+    # Historical Value at Risk
+    var_level = 1 - var_conf
+    var = daily_returns.quantile(var_level)
+
+    # Conditional VaR (Expected Shortfall)
+    cvar = daily_returns[daily_returns <= var].mean()
 
     return pd.Series({
         "Sharpe Ratio": sharpe,
         "Max Drawdown": mdd,
         "Kurtosis": kurt,
         "Skewness": skew,
-        "Annualized Volatility": vol
+        "Annualized Volatility": vol,
+        f"VaR {int(var_conf*100)}%": var,
+        f"CVaR {int(var_conf*100)}%": cvar
     })
