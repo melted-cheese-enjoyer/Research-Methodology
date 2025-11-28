@@ -212,3 +212,11 @@ def run_cppi_dynamic_floor(returns, floor=0.8, m=3, rebalance_freq='ME'):
         weights.append(w)
 
     return pd.Series(values, index=returns.index), weights
+
+# Sharpe ratio (annualized)
+def annualized_sharpe(returns, risk_free=0.0, trading_days=252):
+    excess_returns = returns - risk_free
+    return (excess_returns.mean() / excess_returns.std()) * np.sqrt(trading_days)
+
+def annualized_volatility(returns, trading_days=252):
+    return returns.std() * np.sqrt(trading_days)
